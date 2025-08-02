@@ -1,11 +1,10 @@
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import mimetypes
 from pathlib import Path
 import uuid
 import shutil
-
+from app.api.router import router as doc_router
 from app.db.session import SessionLocal
 from app.db.models.document import Document
 from app.utils.parser import extract_text
@@ -14,6 +13,7 @@ from app.api.schemas import DocumentOut
 STORAGE_PATH = Path(__file__).resolve().parents[1] / "storage"
 
 app = FastAPI(title="LegalLens AI")
+app.include_router(doc_router)
 
 
 def get_db():

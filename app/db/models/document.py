@@ -2,8 +2,9 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from sqlalchemy import String, Text, DateTime, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
+from typing import List
 
 
 class Document(Base):
@@ -16,3 +17,8 @@ class Document(Base):
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    insights: Mapped[List["DocumentInsight"]] = relationship(
+        back_populates="document",
+        cascade="all, delete-orphan",
+    )
