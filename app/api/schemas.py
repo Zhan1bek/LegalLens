@@ -15,11 +15,7 @@ class DocumentOut(BaseModel):
 
 
 class InsightOut(BaseModel):
-    id: UUID
-    document_id: UUID
-    summary: str
-    risks: list[str]
-    created_at: datetime
+    answer: str
 
     class Config:
         from_attributes = True
