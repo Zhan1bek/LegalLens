@@ -1,19 +1,21 @@
-from functools import lru_cache
 from pathlib import Path
-from pydantic import PostgresDsn
-from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
+from functools import lru_cache
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import PostgresDsn
+
+env_path = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
     openai_api_key: str = ""
     database_url: PostgresDsn
+    ollama_url: str = "http://localhost:11434"
 
-    class Config:
-        env_file = ".env"
-        env_prefix = ""
+    model_config = SettingsConfigDict(
+        env_file=env_path,
+        extra="ignore",
+    )
 
 
 @lru_cache
