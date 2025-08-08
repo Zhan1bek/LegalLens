@@ -1,6 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, Field
+from typing import List
 
 
 class DocumentOut(BaseModel):
@@ -14,8 +15,37 @@ class DocumentOut(BaseModel):
         from_attributes = True
 
 
-class InsightOut(BaseModel):
-    answer: str
+class DocumentInsightOut(BaseModel):
+    id: UUID
+    document_id: UUID
+    summary: str
+    risks: str
+    created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class AnalysisStatusOut(BaseModel):
+    document_id: UUID
+    status: str
+    latest: DocumentInsightOut | None = None
+    history: List[DocumentInsightOut] = []
+
+
+class ConversationOut(BaseModel):
+    id: UUID
+    document_id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ChatMessageIn(BaseModel):
+    question: str
+
+
+class ChatMessageOut(BaseModel):
+    answer: str
+    citations: list[dict] = []

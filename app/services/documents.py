@@ -2,11 +2,13 @@ import mimetypes
 import shutil
 import uuid
 from pathlib import Path
-from sqlalchemy.orm import Session
 from fastapi import UploadFile, HTTPException
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.db.models.chunk import DocumentChunk
 from app.db.models.document import Document
+from app.services.embeddings import split_for_indexing, embed_batch
 from app.utils.parser import extract_text
 from app.core.logging import logger
 
@@ -51,6 +53,43 @@ def create_document(db: Session, file: UploadFile) -> Document:
     db.add(doc)
     db.commit()
     db.refresh(doc)
+
+    logger.info("Document {id} saved, {size} bytes", id=doc.id, size=size)
+    return doc
+
+
+def _index_document_chunks(db: Session, doc: Document) -> None:
+    chunks = split_for_indexing(doc.content)
+    vectors = embed_batch(chunks)
+    rows = []
+    for i, (t, v) in enumerate(zip(chunks, vectors)):
+        rows.append(
+            DocumentChunk(document_id=doc.id, chunk_index=i, text=t, embedding=v)
+        )
+    db.bulk_save_objects(rows)
+    db.commit()
+
+
+def create_document(db: Session, file: UploadFile) -> Document:
+    # как у тебя сейчас
+    mime = _validate_mime(file)
+    path = save_file_to_disk(file)
+    text = extract_text(path, mime)
+    size = path.stat().st_size
+
+    doc = Document(
+        original_name=file.filename,
+        mime_type=mime,
+        file_path=str(path),
+        size_bytes=size,
+        content=text,
+    )
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+
+    # Новое: индексация
+    _index_document_chunks(db, doc)
 
     logger.info("Document {id} saved, {size} bytes", id=doc.id, size=size)
     return doc
